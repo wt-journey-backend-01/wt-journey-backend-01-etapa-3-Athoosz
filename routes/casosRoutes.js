@@ -139,11 +139,11 @@ casosRouter.delete("/:id", casosController.deleteCaso);
  *     summary: Obtém casos por ID do agente
  *     parameters:
  *       - in: query
- *         name: uuid
+ *         name: agente_id
  *         required: true
- *         description: UUID do agente
+ *         description: ID do agente
  *         schema:
- *           type: string
+ *           type: integer
  *     responses:
  *       200:
  *         description: Lista de casos para o agente
