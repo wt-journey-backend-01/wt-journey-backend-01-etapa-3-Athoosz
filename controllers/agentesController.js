@@ -21,9 +21,14 @@ async function getAllAgentes(req, res) {
                "A data inicial não pode ser maior que a data final."
             );
          }
-         agentes = await agentesRepository.findByDataDeIncorporacaoRange(startDate, endDate);
+         agentes = await agentesRepository.findByDataDeIncorporacaoRange(
+            startDate,
+            endDate
+         );
       } else if (sort === "dataDeIncorporacao") {
-         agentes = await agentesRepository.findAllSortedByDataDeIncorporacao(order);
+         agentes = await agentesRepository.findAllSortedByDataDeIncorporacao(
+            order
+         );
       } else {
          agentes = await agentesRepository.findAll();
       }
@@ -32,12 +37,17 @@ async function getAllAgentes(req, res) {
       }
       res.status(200).json(agentes);
    } catch (error) {
-      return errorResponse(res, 500, "Erro ao buscar agentes", [{ error: error.message }]);
+      return errorResponse(res, 500, "Erro ao buscar agentes", [
+         { error: error.message },
+      ]);
    }
 }
 
 async function getAgenteById(req, res) {
    const { id } = req.params;
+   if (isNaN(Number(id))) {
+      return errorResponse(res, 400, "ID inválido: deve ser um número");
+   }
    try {
       const agente = await agentesRepository.findById(id);
       if (agente) {
@@ -48,7 +58,9 @@ async function getAgenteById(req, res) {
          ]);
       }
    } catch (error) {
-      return errorResponse(res, 500, "Erro ao buscar agente", [{ error: error.message }]);
+      return errorResponse(res, 500, "Erro ao buscar agente", [
+         { error: error.message },
+      ]);
    }
 }
 
@@ -108,7 +120,9 @@ async function createAgente(req, res) {
 async function updateAgente(req, res) {
    const { id } = req.params;
    const { id: newId, ...updatedAgente } = req.body;
-
+   if (isNaN(Number(id))) {
+      return errorResponse(res, 400, "ID inválido: deve ser um número");
+   }
    if (
       !updatedAgente ||
       typeof updatedAgente !== "object" ||
@@ -159,7 +173,10 @@ async function updateAgente(req, res) {
    }
 
    try {
-      const agenteAtualizado = await agentesRepository.updateAgente(id, updatedAgente);
+      const agenteAtualizado = await agentesRepository.updateAgente(
+         id,
+         updatedAgente
+      );
       res.status(200).json(agenteAtualizado);
    } catch (error) {
       return errorResponse(res, 400, "Erro ao atualizar agente", [
@@ -170,6 +187,9 @@ async function updateAgente(req, res) {
 
 async function deleteAgente(req, res) {
    const { id } = req.params;
+   if (isNaN(Number(id))) {
+      return errorResponse(res, 400, "ID inválido: deve ser um número");
+   }
 
    const agenteExiste = await agentesRepository.findById(id);
    if (!agenteExiste) {
@@ -190,6 +210,9 @@ async function patchAgente(req, res) {
    const { id } = req.params;
    const { id: newId, ...updatedFields } = req.body;
 
+   if (isNaN(Number(id))) {
+      return errorResponse(res, 400, "ID inválido: deve ser um número");
+   }
    if (
       !updatedFields ||
       typeof updatedFields !== "object" ||
@@ -242,7 +265,10 @@ async function patchAgente(req, res) {
    }
 
    try {
-      const agenteAtualizado = await agentesRepository.patchAgente(id, updatedFields);
+      const agenteAtualizado = await agentesRepository.patchAgente(
+         id,
+         updatedFields
+      );
       res.status(200).json(agenteAtualizado);
    } catch (error) {
       return errorResponse(res, 400, "Erro ao atualizar agente", [
@@ -256,11 +282,17 @@ async function getAgentesByCargo(req, res) {
    try {
       const agentes = await agentesRepository.getAgenteByCargo(cargo);
       if (!agentes || agentes.length === 0) {
-         return errorResponse(res, 404, "Nenhum agente encontrado com este cargo");
+         return errorResponse(
+            res,
+            404,
+            "Nenhum agente encontrado com este cargo"
+         );
       }
       res.status(200).json(agentes);
    } catch (error) {
-      return errorResponse(res, 500, "Erro ao buscar agentes por cargo", [{ error: error.message }]);
+      return errorResponse(res, 500, "Erro ao buscar agentes por cargo", [
+         { error: error.message },
+      ]);
    }
 }
 

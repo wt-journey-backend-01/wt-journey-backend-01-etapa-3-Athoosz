@@ -1,29 +1,34 @@
-const db = require('../db/db');
+const db = require("../db/db");
 
 async function findAll() {
    try {
-      return await db('agentes').select('*');
+      return await db("agentes").select("*");
    } catch (error) {
-      console.error('Erro ao buscar agentes:', error);
+      console.error("Erro ao buscar agentes:", error);
       throw error;
    }
 }
 
 async function findById(id) {
    try {
-      return await db('agentes').where({ id }).first();
+      return await db("agentes").where({ id }).first();
    } catch (error) {
-      console.error('Erro ao buscar agente por ID:', error);
+      console.error("Erro ao buscar agente por ID:", error);
       throw error;
    }
 }
 
 async function createAgente(agente) {
    try {
-      const [novoAgente] = await db('agentes').insert(agente).returning('*');
-      return novoAgente;
+      const novo = {
+         nome: agente.nome,
+         dataDeIncorporacao: agente.dataDeIncorporacao,
+         cargo: agente.cargo,
+      };
+      const [id] = await db("agentes").insert(novo).returning("id");
+      return await db("agentes").where({ id }).first();
    } catch (error) {
-      console.error('Erro ao criar agente:', error);
+      console.error("Erro ao criar agente:", error);
       throw error;
    }
 }
@@ -31,56 +36,66 @@ async function createAgente(agente) {
 async function updateAgente(id, updatedAgente) {
    try {
       const { id: _, ...rest } = updatedAgente;
-      const [agenteAtualizado] = await db('agentes').where({ id }).update(rest).returning('*');
-      return agenteAtualizado;
+      const novo = {
+         nome: rest.nome,
+         dataDeIncorporacao: rest.dataDeIncorporacao,
+         cargo: rest.cargo,
+      };
+      await db("agentes").where({ id }).update(updatedAgente);
+      return await db("agentes").where({ id }).first();
    } catch (error) {
-      console.error('Erro ao atualizar agente:', error);
+      console.error("Erro ao atualizar agente:", error);
       throw error;
    }
 }
 
 async function patchAgente(id, updatedFields) {
    try {
-      const [agenteAtualizado] = await db('agentes').where({ id }).update(updatedFields).returning('*');
-      return agenteAtualizado;
+      await db("agentes").where({ id }).update(updatedFields);
+      return await db("agentes").where({ id }).first();
    } catch (error) {
-      console.error('Erro ao atualizar parcialmente agente:', error);
+      console.error("Erro ao atualizar parcialmente agente:", error);
       throw error;
    }
 }
 
 async function deleteAgente(id) {
    try {
-      return await db('agentes').where({ id }).del();
+      return await db("agentes").where({ id }).del();
    } catch (error) {
-      console.error('Erro ao deletar agente:', error);
+      console.error("Erro ao deletar agente:", error);
       throw error;
    }
 }
 
 async function getAgenteByCargo(cargo) {
    try {
-      return await db('agentes').whereRaw('LOWER(cargo) = ?', [cargo.toLowerCase()]);
+      return await db("agentes").whereRaw("LOWER(cargo) = ?", [
+         cargo.toLowerCase(),
+      ]);
    } catch (error) {
-      console.error('Erro ao buscar agente por cargo:', error);
+      console.error("Erro ao buscar agente por cargo:", error);
       throw error;
    }
 }
 
 async function findAllSortedByDataDeIncorporacao(order = "asc") {
    try {
-      return await db('agentes').orderBy('dataDeIncorporacao', order);
+      return await db("agentes").orderBy("dataDeIncorporacao", order);
    } catch (error) {
-      console.error('Erro ao buscar agentes ordenados:', error);
+      console.error("Erro ao buscar agentes ordenados:", error);
       throw error;
    }
 }
 
 async function findByDataDeIncorporacaoRange(start, end) {
    try {
-      return await db('agentes').whereBetween('dataDeIncorporacao', [start, end]);
+      return await db("agentes").whereBetween("dataDeIncorporacao", [
+         start,
+         end,
+      ]);
    } catch (error) {
-      console.error('Erro ao buscar agentes por intervalo de data:', error);
+      console.error("Erro ao buscar agentes por intervalo de data:", error);
       throw error;
    }
 }
