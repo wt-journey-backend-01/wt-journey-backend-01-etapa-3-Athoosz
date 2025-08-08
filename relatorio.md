@@ -1,6 +1,6 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 5 créditos restantes para usar o sistema de feedback AI.
+Você tem 4 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para Athoosz:
 
@@ -8,86 +8,94 @@ Nota final: **0.0/100**
 
 # Feedback para Athoosz 🚓✨
 
-Olá, Athoosz! Primeiro, quero parabenizar você por todo o esforço e dedicação para migrar sua API para usar PostgreSQL com Knex.js! 🎉 Vi que você estruturou o projeto com controllers, repositories, rotas e até integrou a documentação Swagger, o que é um ótimo sinal de organização. Além disso, você já implementou validações e tratamento de erros personalizados, o que é um grande diferencial! 👏
+Olá, Athoosz! Primeiro, quero parabenizá-lo pelo esforço em avançar na construção dessa API para o Departamento de Polícia. Trabalhar com Express.js, PostgreSQL e Knex.js não é trivial, e você já conseguiu implementar várias validações importantes e uma arquitetura modular muito bem pensada! 🎉👏
 
-Também notei que você tentou implementar endpoints de filtragem avançada (por status, agente, e filtros complexos de data), o que mostra que você está buscando ir além do básico. Isso é fantástico! 🚀
-
----
-
-## Vamos analisar juntos os pontos que precisam de atenção para destravar sua API e garantir que ela funcione perfeitamente com o banco de dados.
+Além disso, vi que você implementou algumas funcionalidades extras de filtragem e busca que são desafiadoras, como filtros por status, agente responsável e buscas full-text nos casos. Isso mostra que você está buscando ir além dos requisitos básicos, o que é excelente! 🚀
 
 ---
 
-## 1. Configuração e Conexão com o Banco de Dados
+## Vamos juntos destrinchar o que pode ser melhorado para destravar todo o potencial do seu projeto? 🕵️‍♂️🔍
 
-### O que observei:
+### 1. **Conexão e Configuração do Banco de Dados**
 
-- Seu arquivo `knexfile.js` está configurado para usar o `.env` para as variáveis de conexão (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`), o que é ótimo para manter segurança e flexibilidade.
-- O arquivo `db/db.js` importa o knex com a configuração `config.development` corretamente.
-- No entanto, na estrutura do seu projeto, não encontrei o arquivo `.env` (ou não foi enviado), e na sua submissão foi detectada uma penalidade por ter o `.env` na raiz, que não deveria estar versionado.
+Ao analisar seu projeto, percebi que você configurou o `knexfile.js` corretamente para o ambiente de desenvolvimento, utilizando variáveis de ambiente para usuário, senha e banco, e também criou o arquivo `db/db.js` que importa essa configuração para criar a instância do Knex:
 
-### Por que isso é importante?
+```js
+// db/db.js
+const config = require("../knexfile")
+const knex = require("knex")
 
-Se o `.env` não estiver configurado corretamente, ou se as variáveis de ambiente não estiverem definidas, a conexão com o banco não vai funcionar, e isso impede que qualquer query seja executada. Como consequência, os endpoints que acessam o banco (todos os de agentes e casos) vão falhar.
+const db = knex(config.development)
 
-### Como melhorar:
-
-- **Não versionar o arquivo `.env`** no seu repositório para evitar penalidades. Você pode criar um `.env.example` com os nomes das variáveis, mas sem valores sensíveis.
-- Verifique se o `.env` está na raiz do projeto e se contém as variáveis corretas, por exemplo:
-
-```env
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=policia_db
+module.exports = db
 ```
 
-- Certifique-se de que o container do PostgreSQL está rodando conforme as instruções no `INSTRUCTIONS.md` (com Docker ou Docker Compose).
-- Teste a conexão manualmente, por exemplo, criando um script simples para testar a conexão com o banco usando knex antes de rodar a API.
+Isso está correto e é o caminho certo para modularizar a conexão.
 
-📚 Para entender melhor como configurar o banco com Docker e Knex, recomendo este vídeo que explica passo a passo:  
-[Configuração de Banco de Dados com Docker e Knex](http://googleusercontent.com/youtube.com/docker-postgresql-node)
+**Porém, um ponto crítico aqui é: você tem o arquivo `.env` no seu repositório?**  
+Vi que há uma penalidade por isso, e isso pode indicar que o arquivo `.env` está presente na raiz, o que não é recomendado pois pode conter dados sensíveis e também pode causar problemas em ambientes diferentes. Além disso, se o `.env` estiver mal configurado (ou ausente), a conexão com o banco não vai funcionar, o que impacta diretamente em todas as operações com o banco de dados.
+
+**Dica importante:**  
+- Garanta que o `.env` esteja configurado corretamente e **NÃO** esteja versionado no Git (adicione-o ao `.gitignore`).  
+- Verifique se as variáveis `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_DB` estão definidas e batem com o que está rodando no seu container Docker.  
+- Se estiver usando Docker, o `docker-compose.yml` está correto, mas fique atento para subir o container e garantir que o banco esteja aceitando conexões.
+
+Recomendo fortemente este vídeo para entender e configurar seu ambiente com Docker e Knex:  
+📺 [Configuração de Banco de Dados com Docker e Knex](http://googleusercontent.com/youtube.com/docker-postgresql-node)
 
 ---
 
-## 2. Migrations e Seeds
+### 2. **Migrations e Seeds**
 
-### O que observei:
+Você criou uma migration que parece correta e cria as tabelas `agentes` e `casos` com os tipos e relacionamentos esperados:
 
-- Seu arquivo de migration `20250807200329_solution_migrations.js` está bem estruturado, criando as tabelas `agentes` e `casos` com os campos e constraints corretos.
-- Os seeds para `agentes` e `casos` também estão presentes e parecem corretos, com dados coerentes.
+```js
+// db/migrations/20250807200329_solution_migrations.js
+exports.up = async function(knex) {
+  await knex.schema.createTable('agentes', function(table) {
+    table.increments('id').primary();
+    table.string('nome').notNullable();
+    table.date('dataDeIncorporacao').notNullable();
+    table.string('cargo').notNullable();
+  });
 
-### Possível causa de falha:
+  await knex.schema.createTable('casos', function(table) {
+    table.increments('id').primary();
+    table.string('titulo').notNullable();
+    table.text('descricao').notNullable();
+    table.enu('status', ['aberto', 'solucionado']).notNullable();
+    table.integer('agente_id').unsigned().notNullable()
+      .references('id').inTable('agentes')
+      .onDelete('CASCADE');
+  });
+};
+```
 
-Se as migrations não foram executadas com sucesso, as tabelas não existem no banco, e as queries do Knex falharão silenciosamente ou lançarão erros, impedindo que os dados sejam lidos ou inseridos.
+Também vi que os seeds estão populando as tabelas com dados iniciais, o que é ótimo para testes.
 
-### Como melhorar:
+**Mas atenção:**  
+Se as migrations não forem executadas com sucesso, as tabelas não existirão e isso causará falhas em todas as queries que tentam acessar `agentes` ou `casos`. Isso pode ser uma causa raiz para os erros que você está enfrentando.
 
-- Execute as migrations com:  
+Verifique se você executou corretamente:
+
 ```bash
 npx knex migrate:latest
-```
-
-- Depois execute os seeds:  
-```bash
 npx knex seed:run
 ```
 
-- Verifique no banco se as tabelas existem e se os dados estão inseridos.
+Se você não fez isso, seu banco estará vazio ou sem as tabelas, e as operações de CRUD não funcionarão.  
 
-📚 Para entender melhor migrations e seeds, veja os guias oficiais do Knex:  
-- [Migrations - Knex](https://knexjs.org/guide/migrations.html)  
-- [Query Builder - Knex](https://knexjs.org/guide/query-builder.html)  
-- Para seeds, este vídeo pode ajudar: [Knex Seeds Tutorial](http://googleusercontent.com/youtube.com/knex-seeds)
+Se precisar entender melhor sobre migrations e seeds, dê uma olhada aqui:  
+📚 [Documentação oficial do Knex sobre migrations](https://knexjs.org/guide/migrations.html)  
+📺 [Vídeo sobre Knex Seeds](http://googleusercontent.com/youtube.com/knex-seeds)
 
 ---
 
-## 3. Organização e Estrutura do Projeto
+### 3. **Estrutura do Projeto**
 
-### O que observei:
+Sua estrutura de pastas e arquivos está muito próxima do esperado, o que é ótimo! Você modularizou bem as rotas, controllers, repositories e utils.
 
-Sua estrutura está muito próxima do esperado, com pastas separadas para controllers, repositories, routes, db (com migrations e seeds), e utils. Isso é excelente!
-
-Só reforço que a estrutura esperada é esta:
+Só fique atento para a organização exata, que deve seguir este padrão:
 
 ```
 📦 SEU-REPOSITÓRIO
@@ -118,112 +126,147 @@ Só reforço que a estrutura esperada é esta:
     └── errorHandler.js
 ```
 
-Se estiver diferente, pode causar problemas na importação dos módulos e na organização do código.
-
-📚 Se quiser entender melhor a arquitetura MVC aplicada a Node.js, recomendo este vídeo:  
-[Arquitetura MVC - Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
+Se estiver faltando algum arquivo ou pasta, ou se estiver fora do lugar, isso pode causar problemas na importação dos módulos e falhas na aplicação.
 
 ---
 
-## 4. Implementação dos Endpoints e Validações
+### 4. **Validações e Tratamento de Erros**
 
-### O que observei:
+Você fez um excelente trabalho implementando várias validações nos controllers, como verificar payloads vazios, formatos de data, valores permitidos para status, e checagem da existência do agente antes de criar ou atualizar um caso.
 
-- Os controllers e repositories estão bem modularizados e seguem boas práticas.
-- As validações de payload (corpo da requisição) estão presentes e detalhadas, o que é ótimo para garantir a integridade dos dados.
-- O tratamento de erros está centralizado via `errorResponse`, e os status HTTP estão sendo usados corretamente.
-- No entanto, os testes indicam que os endpoints não estão funcionando corretamente para as operações CRUD completas, o que sugere que as queries para o banco não estão sendo executadas ou os dados não estão sendo encontrados.
-
-### Possíveis causas:
-
-- Se o banco não está populado (migrations/seeds não executados), as consultas retornam vazias e geram 404.
-- Se a conexão com o banco falha, as queries lançam erros que podem não estar sendo tratados adequadamente.
-- Atenção especial ao método `returning('*')` usado nos inserts e updates: ele funciona no PostgreSQL, mas se o banco estiver mal configurado, pode gerar erros.
-
-### Como melhorar:
-
-- Teste cada camada isoladamente: faça queries diretas no banco para garantir que os dados existem.
-- Use `console.log` para debugar o retorno das queries no repository e verifique se os dados estão vindo corretamente.
-- Garanta que o ID passado nos parâmetros seja do tipo correto (número) e que o banco tenha dados com esses IDs.
-
-📚 Para aprofundar em manipulação de requisições, respostas e status HTTP, recomendo:  
-- [HTTP Status Codes e Express.js](https://youtu.be/RSZHvQomeKE)  
-- [Validação de Dados em APIs Node.js](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)
-
----
-
-## 5. Endpoints de Filtragem e Funcionalidades Bônus
-
-### O que observei:
-
-- Você implementou endpoints para filtrar casos por status, agente, e pesquisa por título/descrição.
-- Também implementou filtros complexos para agentes por intervalo de datas e ordenação.
-- Estes são requisitos bônus e mostram sua iniciativa para ir além!
-
-### Por que não passaram?
-
-- Se a conexão com o banco ou as migrations/seeds não estiverem funcionando, esses filtros não vão retornar dados.
-- Além disso, a ordem das rotas em `casosRoutes.js` pode estar interferindo, pois você tem rotas com parâmetros dinâmicos (`/:id`) e rotas fixas (`/agent`, `/status`, `/search`). No Express, a ordem importa! Se a rota `/:id` estiver antes de `/agent`, a requisição para `/agent` será interpretada como `id = 'agent'`, causando erro.
-
-### Como melhorar:
-
-- Reordene as rotas para que as rotas fixas venham antes das dinâmicas. Exemplo:
+Exemplo de validação de payload no `createAgente`:
 
 ```js
-// Coloque essas rotas primeiro
-casosRouter.get("/agent", casosController.getCasosByAgenteId);
-casosRouter.get("/status", casosController.getCasosByStatus);
-casosRouter.get("/search", casosController.getCasosByTituloOrDescricao);
-
-// Depois as rotas com parâmetro dinâmico
-casosRouter.get("/:id", casosController.getCasoById);
-casosRouter.put("/:id", casosController.updateCaso);
-casosRouter.patch("/:id", casosController.patchCaso);
-casosRouter.delete("/:id", casosController.deleteCaso);
+if (
+   !novoAgente ||
+   typeof novoAgente !== "object" ||
+   Array.isArray(novoAgente) ||
+   Object.keys(novoAgente).length === 0
+) {
+   return errorResponse(
+      res,
+      400,
+      "Payload inválido: deve ser um objeto com ao menos um campo para criação"
+   );
+}
 ```
 
-- Isso evita conflitos e garante que o Express identifique corretamente qual rota usar.
+E a validação da data:
+
+```js
+if (!isValidDate(novoAgente.dataDeIncorporacao)) {
+   return errorResponse(
+      res,
+      400,
+      "O campo 'dataDeIncorporacao' deve ser uma data válida no formato YYYY-MM-DD",
+      [{ dataDeIncorporacao: "Data inválida" }]
+   );
+}
+```
+
+Isso é essencial para uma API robusta! 👍
 
 ---
 
-## 6. Penalidade: Arquivo `.env` na raiz do projeto
+### 5. **Queries no Repositório**
 
-Vi que o arquivo `.env` está presente na raiz do projeto e isso causou uma penalidade.
+As queries usando Knex estão muito bem feitas, com métodos claros para cada operação (findAll, findById, create, update, patch, delete), e uso correto do `.returning('*')` para retornar os registros atualizados/novos.
 
-### Por que isso é importante?
+Por exemplo, no `agentesRepository.js`:
 
-Arquivos `.env` contêm dados sensíveis e não devem ser versionados no repositório público. Você deve incluí-los no `.gitignore`.
+```js
+async function createAgente(agente) {
+   try {
+      const [novoAgente] = await db('agentes').insert(agente).returning('*');
+      return novoAgente;
+   } catch (error) {
+      console.error('Erro ao criar agente:', error);
+      throw error;
+   }
+}
+```
 
-### Como corrigir:
+E no `casosRepository.js`:
 
-- Adicione `.env` no seu arquivo `.gitignore`.
-- Remova o `.env` do controle de versão (git rm --cached .env).
-- Crie um `.env.example` com as variáveis necessárias, sem valores reais.
+```js
+async function findByTituloOrDescricao(query) {
+    const q = `%${query.toLowerCase()}%`;
+    return await db('casos')
+        .whereRaw('LOWER(titulo) LIKE ?', [q])
+        .orWhereRaw('LOWER(descricao) LIKE ?', [q]);
+}
+```
 
----
-
-# Resumo dos principais pontos para focar 🔑
-
-- [ ] **Configurar corretamente o arquivo `.env` e garantir que as variáveis de ambiente estejam definidas e não versionadas.**
-- [ ] **Executar as migrations e seeds para criar as tabelas e popular os dados no banco.**
-- [ ] **Garantir que o banco de dados está rodando e acessível pela aplicação.**
-- [ ] **Revisar a ordem das rotas no Express para evitar conflitos entre rotas fixas e dinâmicas.**
-- [ ] **Testar as queries no banco e debugar os repositories para garantir que os dados estão sendo retornados corretamente.**
-- [ ] **Ajustar o `.gitignore` para não versionar o `.env`.**
-- [ ] **Manter a estrutura de pastas conforme o padrão esperado para garantir organização e fácil manutenção.**
-
----
-
-Athoosz, você está no caminho certo! 🚀 A persistência com banco de dados é um passo desafiador, mas essencial para construir APIs robustas. Continue focando na conexão com o banco, na execução das migrations/seeds e na organização das rotas. Com isso, sua API vai funcionar perfeitamente e você vai conseguir entregar tudo o que foi pedido.
-
-Se precisar, volte aos recursos que indiquei para reforçar seu aprendizado e, claro, estou aqui para ajudar! 💪✨
-
-Bora continuar codando e evoluindo! Você vai chegar lá! 👊😊
+**No entanto, se as tabelas não existirem ou o banco não estiver conectado, essas queries falharão silenciosamente ou lançarão erros que impedem o funcionamento da API.**
 
 ---
 
-Um abraço de Code Buddy,  
-🚔👨‍💻
+### 6. **Possíveis Causas das Falhas**
+
+- **Banco de dados não está rodando ou não está acessível:** Verifique se o container Docker está ativo e escutando na porta 5432.  
+- **Variáveis de ambiente não configuradas ou incorretas:** Isso impede a conexão do Knex.  
+- **Migrations não executadas:** Tabelas `agentes` e `casos` não existem, causando erro nas queries.  
+- **Seeds não executados:** Banco vazio, então buscas e filtros retornam vazio, causando 404.  
+- **Arquivo `.env` versionado:** Pode causar conflitos de configuração ou exposição de dados sensíveis.
+
+---
+
+### 7. **Recomendações para Avançar**
+
+- **Remova o arquivo `.env` do seu repositório e configure-o localmente.**  
+- **Garanta que o banco de dados está rodando e acessível.** Use o comando do Docker para subir o container conforme seu INSTRUCTIONS.md:  
+
+```bash
+docker run --name policia_db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=policia_db -p 5432:5432 -d postgres
+```
+
+- **Execute as migrations e seeds:**  
+
+```bash
+npx knex migrate:latest
+npx knex seed:run
+```
+
+- **Teste a conexão com o banco antes de rodar a API:** Você pode criar um pequeno script para testar a conexão com o Knex e garantir que não há erros.  
+
+- **Revise os tratamentos de erro para garantir que mensagens claras sejam retornadas em caso de falha na conexão ou queries.**
+
+- **Continue usando as boas práticas que você já implementou nas validações e arquitetura modular!**
+
+---
+
+### 8. **Recursos para Estudo**
+
+- Para garantir o ambiente e banco funcionando:  
+  📺 [Configuração de Banco de Dados com Docker e Knex](http://googleusercontent.com/youtube.com/docker-postgresql-node)  
+- Para entender melhor migrations e seeds:  
+  📚 [Knex Migrations](https://knexjs.org/guide/migrations.html)  
+  📺 [Knex Seeds](http://googleusercontent.com/youtube.com/knex-seeds)  
+- Para organizar seu projeto em MVC e manter o código limpo:  
+  📺 [Arquitetura MVC em Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)  
+- Para validar dados e tratar erros HTTP corretamente:  
+  📺 [Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)  
+  🌐 [Status 400 - Bad Request](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
+  🌐 [Status 404 - Not Found](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404)
+
+---
+
+## 📋 Resumo dos Pontos Principais para Focar
+
+- **Corrigir a configuração do `.env`**: Remover do repositório e garantir que as variáveis estão corretas e acessíveis.  
+- **Garantir que o banco esteja rodando e acessível**: Usar Docker para subir o PostgreSQL e verificar conexão.  
+- **Executar migrations e seeds corretamente** para criar e popular as tabelas.  
+- **Verificar se a estrutura do projeto está exatamente conforme o esperado**, para evitar erros de importação.  
+- **Manter as validações e tratamento de erros que já estão muito bem feitos!**  
+- **Testar a aplicação localmente e fazer pequenos scripts para validar a conexão com o banco.**
+
+---
+
+Athoosz, você está no caminho certo e com uma base sólida! A maior parte dos problemas que você está enfrentando provavelmente vem da conexão com o banco e da criação das tabelas. Foque nesses pontos e você verá sua API funcionando perfeitamente, com todos os endpoints entregando as respostas corretas e status HTTP adequados.
+
+Continue se dedicando, porque você tem tudo para construir um sistema robusto e profissional! 🚀💪 Se precisar, volte a esses recursos e conte comigo para ajudar no que for preciso.
+
+Um abraço e até a próxima revisão! 🤗👨‍💻✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
