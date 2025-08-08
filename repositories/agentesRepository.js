@@ -41,7 +41,7 @@ async function updateAgente(id, updatedAgente) {
          dataDeIncorporacao: rest.dataDeIncorporacao,
          cargo: rest.cargo,
       };
-      await db("agentes").where({ id }).update(updatedAgente);
+      await db("agentes").where({ id }).update(novo);
       return await db("agentes").where({ id }).first();
    } catch (error) {
       console.error("Erro ao atualizar agente:", error);

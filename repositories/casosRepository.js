@@ -15,7 +15,13 @@ async function addCaso(caso) {
 
 async function updateCaso(id, updatedCaso) {
    const { id: _, ...rest } = updatedCaso;
-   await db("casos").where({ id }).update(rest);
+   const novo = {
+      titulo: rest.titulo,
+      descricao: rest.descricao,
+      status: rest.status,
+      agente_id: rest.agente_id
+   };
+   await db("casos").where({ id }).update(novo);
    return await db("casos").where({ id }).first();
 }
 
