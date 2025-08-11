@@ -9,7 +9,10 @@ async function findById(id) {
 }
 
 async function addCaso(caso) {
-   const [id] = await db("casos").insert(caso).returning("id");
+   const inserted = await db("casos").insert(caso).returning("id");
+   const id = Array.isArray(inserted)
+      ? (typeof inserted[0] === "object" ? inserted[0].id : inserted[0])
+      : inserted;
    return await db("casos").where({ id }).first();
 }
 

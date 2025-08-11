@@ -25,7 +25,10 @@ async function createAgente(agente) {
          dataDeIncorporacao: agente.dataDeIncorporacao,
          cargo: agente.cargo,
       };
-      const [id] = await db("agentes").insert(novo).returning("id");
+      const inserted = await db("agentes").insert(novo).returning("id");
+      const id = Array.isArray(inserted)
+         ? (typeof inserted[0] === "object" ? inserted[0].id : inserted[0])
+         : inserted;
       return await db("agentes").where({ id }).first();
    } catch (error) {
       console.error("Erro ao criar agente:", error);
@@ -41,7 +44,7 @@ async function updateAgente(id, updatedAgente) {
          dataDeIncorporacao: rest.dataDeIncorporacao,
          cargo: rest.cargo,
       };
-   await db("agentes").where({ id }).update(novo);
+      await db("agentes").where({ id }).update(novo);
       return await db("agentes").where({ id }).first();
    } catch (error) {
       console.error("Erro ao atualizar agente:", error);
