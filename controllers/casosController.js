@@ -22,13 +22,11 @@ async function getCasoById(req, res) {
    try {
       const caso = await casosRepository.findById(id);
       if (!caso) {
-         return errorResponse(res, 404, "Caso não encontrado");
+         return res.status(404).json({ message: "Caso não encontrado" });
       }
       return res.status(200).json(caso);
    } catch (error) {
-      return errorResponse(res, 500, "Erro ao buscar caso", [
-         { error: error.message },
-      ]);
+      return res.status(500).json({ message: "Erro ao buscar caso", error: error.message });
    }
 }
 
