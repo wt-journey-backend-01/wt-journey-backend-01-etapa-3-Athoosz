@@ -109,10 +109,10 @@ async function createAgente(req, res) {
 
    try {
       const agenteCriado = await agentesRepository.createAgente(novoAgente);
-      res.status(201).json(agenteCriado);
+      return res.status(201).json(agenteCriado);
    } catch (error) {
       return errorResponse(res, 400, "Erro ao criar agente", [
-         { field: "body", message: error.message },
+         { error: error.message },
       ]);
    }
 }
@@ -173,14 +173,11 @@ async function updateAgente(req, res) {
    }
 
    try {
-      const agenteAtualizado = await agentesRepository.updateAgente(
-         id,
-         updatedAgente
-      );
-      res.status(200).json(agenteAtualizado);
+      const agenteAtualizado = await agentesRepository.updateAgente(id, updatedAgente);
+      return res.status(200).json(agenteAtualizado);
    } catch (error) {
       return errorResponse(res, 400, "Erro ao atualizar agente", [
-         { field: "body", message: error.message },
+         { error: error.message },
       ]);
    }
 }

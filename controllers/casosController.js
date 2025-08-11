@@ -15,22 +15,21 @@ async function getAllCasos(req, res) {
 }
 
 async function getCasoById(req, res) {
-  const { id } = req.params;
-  if (isNaN(Number(id))) {
-    return errorResponse(res, 400, "ID inválido: deve ser um número");
-  }
-  try {
-    const caso = await casosRepository.findById(id);
-    if (caso) {
-      res.status(200).json(caso);
-    } else {
-      return errorResponse(res, 404, "Caso não encontrado", [
-        { id: `O Caso com o id: ${id} não existe` },
+   const { id } = req.params;
+   if (isNaN(Number(id))) {
+      return errorResponse(res, 400, "ID inválido: deve ser um número");
+   }
+   try {
+      const caso = await casosRepository.findById(id);
+      if (!caso) {
+         return errorResponse(res, 404, "Caso não encontrado");
+      }
+      return res.status(200).json(caso);
+   } catch (error) {
+      return errorResponse(res, 500, "Erro ao buscar caso", [
+         { error: error.message },
       ]);
-    }
-  } catch (error) {
-    return errorResponse(res, 500, "Erro ao buscar caso", [{ error: error.message }]);
-  }
+   }
 }
 
 async function createCaso(req, res) {
